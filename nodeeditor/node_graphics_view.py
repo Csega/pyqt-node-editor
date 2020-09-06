@@ -9,6 +9,7 @@ from PyQt5.QtGui import *
 from nodeeditor.node_graphics_socket import QDMGraphicsSocket
 from nodeeditor.node_graphics_edge import QDMGraphicsEdge
 from nodeeditor.node_edge_dragging import EdgeDragging
+from nodeeditor.node_edge_rerouting import EdgeRerouting
 from nodeeditor.node_graphics_cutline import QDMCutLine
 from nodeeditor.utils import dumpException
 
@@ -16,9 +17,13 @@ from nodeeditor.utils import dumpException
 MODE_NOOP = 1               #: Mode representing ready state
 MODE_EDGE_DRAG = 2          #: Mode representing when we drag edge state
 MODE_EDGE_CUT = 3           #: Mode representing when we draw a cutting edge
+MODE_EDGES_REROUTING = 4    #: Mode representing when we re-route existing edges
 
 #: Distance when click on socket to enable `Drag Edge`
 EDGE_DRAG_START_THRESHOLD = 50
+
+#: Enable UnrealEngine style rerouting
+EDGE_REROUTING_UE = True
 
 
 DEBUG = False
@@ -62,6 +67,9 @@ class QDMGraphicsView(QGraphicsView):
 
         # edge dragging
         self.dragging = EdgeDragging(self)
+
+        # edges re-routing
+        self.rerouting = EdgeRerouting(self)
 
         # cutline
         self.cutline = QDMCutLine()
@@ -221,6 +229,13 @@ class QDMGraphicsView(QGraphicsView):
 
 
         if isinstance(item, QDMGraphicsSocket):
+            if self.mode == MODE_NOOP and event.modifiers() & Qt.CTRL:
+                socket = item.socket
+                if socket.hasAnyEdge():
+                    self.mode = MODE_EDGES_REROUTING
+                    self.rerouting.startRerouting(socket)
+                    return
+
             if self.mode == MODE_NOOP:
                 self.mode = MODE_EDGE_DRAG
                 self.dragging.edgeDragStart(item)
@@ -265,6 +280,21 @@ class QDMGraphicsView(QGraphicsView):
                 if self.distanceBetweenClickAndReleaseIsOff(event):
                     res = self.dragging.edgeDragEnd(item)
                     if res: return
+
+            if self.mode == MODE_EDGES_REROUTING:
+
+                if not EDGE_REROUTING_UE:
+                    # version 2 -- more consistent with the nodeeditor?
+                    if not self.rerouting.first_mb_release:
+                        # for confirmation of first MB release
+                        self.rerouting.first_mb_release = True
+                        # skip any re-routing until first MB was released
+                        return
+
+                self.rerouting.stopRerouting(item.socket if isinstance(item, QDMGraphicsSocket) else None)
+
+                # don't forget to end the REROUTING MODE
+                self.mode = MODE_NOOP
 
             if self.mode == MODE_EDGE_CUT:
                 self.cutIntersectingEdges()
@@ -321,12 +351,19 @@ class QDMGraphicsView(QGraphicsView):
         """Overriden Qt's ``mouseMoveEvent`` handling Scene/View logic"""
         scenepos = self.mapToScene(event.pos())
 
-        if self.mode == MODE_EDGE_DRAG:
-            self.dragging.updateDestination(scenepos.x(), scenepos.y())
+        try:
+            if self.mode == MODE_EDGE_DRAG:
+                self.dragging.updateDestination(scenepos.x(), scenepos.y())
 
-        if self.mode == MODE_EDGE_CUT and self.cutline is not None:
-            self.cutline.line_points.append(scenepos)
-            self.cutline.update()
+            if self.mode == MODE_EDGES_REROUTING:
+                self.rerouting.updateScenePos(scenepos.x(), scenepos.y())
+
+            if self.mode == MODE_EDGE_CUT and self.cutline is not None:
+                self.cutline.line_points.append(scenepos)
+                self.cutline.update()
+
+        except Exception as e:
+            dumpException()
 
         self.last_scene_mouse_position = scenepos
 
@@ -384,7 +421,7 @@ class QDMGraphicsView(QGraphicsView):
             # @TODO: we could collect all touched nodes, and notify them once after all edges removed
             # we could cut 3 edges leading to a single nodeeditor this will notify it 3x
             # maybe we could use some Notifier class with methods collect() and dispatch()
-            for edge in self.grScene.scene.edges:
+            for edge in self.grScene.scene.edges.copy():
                 if edge.grEdge.intersectsWith(p1, p2):
                     edge.remove()
         self.grScene.scene.history.storeHistory("Delete cutted edges", setModified=True)

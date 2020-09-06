@@ -283,7 +283,7 @@ class Node(Serializable):
         if DEBUG: print(" - remove all edges from sockets")
         for socket in (self.inputs+self.outputs):
             # if socket.hasEdge():
-            for edge in socket.edges:
+            for edge in socket.edges.copy():
                 if DEBUG: print("    - removing from socket:", socket, "edge:", edge)
                 edge.remove()
         if DEBUG: print(" - remove grNode")
@@ -334,7 +334,7 @@ class Node(Serializable):
         """
         for other_node in self.getChildrenNodes():
             other_node.markDirty(new_value)
-            other_node.markChildrenDirty(new_value)
+            other_node.markDescendantsDirty(new_value)
 
     def isInvalid(self) -> bool:
         """Is this node marked as `Invalid`?
@@ -374,7 +374,7 @@ class Node(Serializable):
         """
         for other_node in self.getChildrenNodes():
             other_node.markInvalid(new_value)
-            other_node.markChildrenInvalid(new_value)
+            other_node.markDescendantsInvalid(new_value)
 
     def eval(self, index=0):
         """Evaluate this `Node`. This is supposed to be overriden. See :ref:`evaluation` for more"""
