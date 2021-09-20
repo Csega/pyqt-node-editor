@@ -2,7 +2,7 @@
 """
 A module containing the representation of the NodeEditor's Scene
 """
-import os, json
+import os, sys, json
 from collections import OrderedDict
 from nodeeditor.utils import dumpException, pp
 from nodeeditor.node_serializable import Serializable
@@ -319,7 +319,10 @@ class Scene(Serializable):
         with open(filename, "r") as file:
             raw_data = file.read()
             try:
-                data = json.loads(raw_data, encoding='utf-8')
+                if sys.version_info >= (3, 9):
+                    data = json.loads(raw_data)
+                else:
+                    data = json.loads(raw_data, encoding='utf-8')
                 self.filename = filename
                 self.deserialize(data)
                 self.has_been_modified = False
