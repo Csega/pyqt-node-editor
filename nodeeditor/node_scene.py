@@ -4,7 +4,7 @@ A module containing the representation of the NodeEditor's Scene
 """
 import os, sys, json
 from collections import OrderedDict
-from nodeeditor.utils import dumpException, pp
+from nodeeditor.utils_no_qt import dumpException, pp
 from nodeeditor.node_serializable import Serializable
 from nodeeditor.node_graphics_scene import QDMGraphicsScene
 from nodeeditor.node_node import Node

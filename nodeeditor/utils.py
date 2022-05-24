@@ -2,24 +2,10 @@
 """
 Module with some helper functions
 """
-import traceback
 from qtpy.QtCore import QFile
 from qtpy.QtWidgets import QApplication
-from pprint import PrettyPrinter
 
-pp = PrettyPrinter(indent=4).pprint
-
-
-def dumpException(e=None):
-    """
-    Prints out an Exception message with a traceback to the console
-
-    :param e: Exception to print out
-    :type e: Exception
-    """
-    # print("%s EXCEPTION:" % e.__class__.__name__, e)
-    # traceback.print_tb(e.__traceback__)
-    traceback.print_exc()
+from nodeeditor.utils_no_qt import pp, dumpException
 
 
 def loadStylesheet(filename: str):

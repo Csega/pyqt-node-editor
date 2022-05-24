@@ -7,7 +7,7 @@ from nodeeditor.node_graphics_node import QDMGraphicsNode
 from nodeeditor.node_content_widget import QDMNodeContentWidget
 from nodeeditor.node_serializable import Serializable
 from nodeeditor.node_socket import Socket, LEFT_BOTTOM, LEFT_CENTER, LEFT_TOP, RIGHT_BOTTOM, RIGHT_CENTER, RIGHT_TOP
-from nodeeditor.utils import dumpException, pp
+from nodeeditor.utils_no_qt import dumpException, pp
 
 DEBUG = False
 
