@@ -36,8 +36,8 @@ class QDMGraphicsSocket(QGraphicsItem):
 
         self.isHighlighted = False
 
-        self.radius = 6.0
-        self.outline_width = 1.0
+        self.radius = 6
+        self.outline_width = 1
         self.initAssets()
 
     @property

@@ -70,7 +70,7 @@ class QDMGraphicsNode(QGraphicsItem):
         self.height = 240
         self.edge_roundness = 10.0
         self.edge_padding = 10.0
-        self.title_height = 24.0
+        self.title_height = 24
         self.title_horizontal_padding = 4.0
         self.title_vertical_padding = 4.0
 
